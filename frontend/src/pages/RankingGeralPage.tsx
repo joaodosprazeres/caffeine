@@ -1,12 +1,11 @@
 import { Link } from 'react-router';
-import { useState } from 'react';
 import { useRankingGeral } from '../hooks/useRankingGeral';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
 import { siteConfig } from '../config';
 import Skeleton from '../components/Skeleton';
 
 export default function RankingGeralPage(): React.JSX.Element {
-  const [page, setPage] = useState(1);
+  const page = 1;
   const { dados, carregando, erro } = useRankingGeral(page);
 
   useDocumentMeta({
