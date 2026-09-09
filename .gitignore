@@ -1,0 +1,25 @@
+# Node / frontend
+node_modules/
+dist/
+build/
+*.log
+.env
+.env.*
+!.env.example
+
+# Python / backend
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Editores / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
