@@ -5,13 +5,45 @@ spec.md. Detalhes de schema/endpoints em [data-model.md](./data-model.md) e
 [contracts/openapi.yaml](./contracts/openapi.yaml); passos de implementação ficam em
 `tasks.md` (gerado por `/speckit-tasks`), não aqui.
 
-## Pré-requisitos
+## Opção A — Docker Compose (recomendado)
+
+Sobe frontend, backend e PostgreSQL juntos, com as migrations do Alembic aplicadas
+automaticamente pelo container do backend.
+
+Pré-requisito: Docker + Docker Compose v2.
+
+```bash
+cp .env.example .env   # ajuste POSTGRES_*, JWT_SECRET, CORS_ALLOW_ORIGINS, VITE_API_BASE_URL se necessário
+docker compose up --build
+```
+
+- Backend: `http://localhost:8000` (rotas em `/api/...`)
+- Frontend: `http://localhost:5173`
+- PostgreSQL: `localhost:5432` (útil para inspecionar com `psql`/DBeaver)
+
+Validação: `curl http://localhost:8000/api/ranking-geral` MUST retornar `200` com
+`{"items": [], "page": 1, "page_size": 20, "total": 0}` em um banco recém-criado; abrir
+`http://localhost:5173` MUST carregar a página inicial (ranking geral vazio) sem erros no
+console.
+
+Para parar e remover os containers: `docker compose down` (adicione `-v` para também apagar o
+volume do banco e recomeçar do zero).
+
+> Nota: como o frontend é uma SPA estática, `VITE_API_BASE_URL` é embutida no bundle em tempo
+> de build (`docker compose build`), não em runtime — se mudar essa variável no `.env`, rode
+> `docker compose up --build` novamente para que o frontend seja reconstruído.
+
+## Opção B — Execução manual (sem Docker)
+
+Útil para hot-reload de backend/frontend durante o desenvolvimento.
+
+### Pré-requisitos
 
 - Node.js 20+ e um gerenciador de pacotes (npm/pnpm)
 - Python 3.12+ com `venv` (ou `uv`/`poetry`, conforme decidido em `tasks.md`)
 - PostgreSQL 16 acessível localmente (ex.: via Docker: `docker run -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:16`)
 
-## Setup — Backend
+### Setup — Backend
 
 ```bash
 cd backend
@@ -26,7 +58,7 @@ uvicorn src.main:app --reload --port 8000
 Validação: `curl http://localhost:8000/api/ranking-geral` MUST retornar `200` com
 `{"items": [], "page": 1, "page_size": 20, "total": 0}` em um banco recém-migrado.
 
-## Setup — Frontend
+### Setup — Frontend
 
 ```bash
 cd frontend
