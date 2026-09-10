@@ -40,19 +40,18 @@ volume do banco e recomeçar do zero).
 ### Pré-requisitos
 
 - Node.js 20+ e um gerenciador de pacotes (npm/pnpm)
-- Python 3.12+ com `venv` (ou `uv`/`poetry`, conforme decidido em `tasks.md`)
+- Python 3.12+ com [`uv`](https://docs.astral.sh/uv/) instalado
 - PostgreSQL 16 acessível localmente (ex.: via Docker: `docker run -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:16`)
 
 ### Setup — Backend
 
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+uv sync
 export DATABASE_URL="postgresql+asyncpg://postgres:postgres@localhost:5432/caffeine"
 export JWT_SECRET="dev-only-secret-troque-em-producao"
-alembic upgrade head
-uvicorn src.main:app --reload --port 8000
+uv run alembic upgrade head
+uv run uvicorn src.main:app --reload --port 8000
 ```
 
 Validação: `curl http://localhost:8000/api/ranking-geral` MUST retornar `200` com
