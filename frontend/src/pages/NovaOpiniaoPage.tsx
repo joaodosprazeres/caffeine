@@ -2,11 +2,13 @@ import { useNavigate } from 'react-router';
 import OpiniaoForm from '../components/OpiniaoForm';
 import { useCriarOpiniao } from '../hooks/useCriarOpiniao';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
+import { useAuth } from '../services/authContext';
 import { siteConfig } from '../config';
 import type { OpiniaoCreateRequest } from '../types';
 
 export default function NovaOpiniaoPage(): React.JSX.Element {
   const navigate = useNavigate();
+  const { usuario } = useAuth();
   const { criar, enviando, erro } = useCriarOpiniao();
 
   useDocumentMeta({
@@ -15,8 +17,8 @@ export default function NovaOpiniaoPage(): React.JSX.Element {
   });
 
   async function handleSubmit(dados: OpiniaoCreateRequest): Promise<void> {
-    const opiniao = await criar(dados);
-    navigate(`/opinioes/${opiniao.id}`);
+    await criar(dados);
+    navigate(`/u/${usuario?.username}`);
   }
 
   return (

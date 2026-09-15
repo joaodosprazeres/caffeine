@@ -6,7 +6,7 @@ import type { AuthResponse, LoginRequest, RegistroRequest, Usuario } from '../ty
 interface AuthContextValue {
   usuario: Usuario | null;
   registrar: (dados: RegistroRequest) => Promise<void>;
-  login: (dados: LoginRequest) => Promise<void>;
+  login: (dados: LoginRequest) => Promise<Usuario>;
   logout: () => void;
 }
 
@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
         body: dados,
       });
       aplicarAuth(resposta);
+      return resposta.usuario;
     },
     [aplicarAuth],
   );

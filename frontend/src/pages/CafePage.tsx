@@ -71,18 +71,27 @@ export default function CafePage(): React.JSX.Element {
           {cafe.opinioes.length === 0 && <p className="text-coffee-700">Nenhuma opinião ainda.</p>}
           <ul className="flex flex-col gap-3">
             {cafe.opinioes.map((opiniao) => (
-              <li key={opiniao.id} className="bg-white rounded-lg shadow-sm p-4">
-                <Link
-                  to={`/opinioes/${opiniao.id}`}
-                  aria-label={`Ver opinião de ${opiniao.autor.display_name} sobre ${cafe.nome}`}
-                  className="text-sm font-semibold text-coffee-900"
-                >
-                  {opiniao.autor.display_name}
-                </Link>
-                <p className="text-sm text-coffee-700">
-                  Grão: {opiniao.grao_especial} · Torra: {opiniao.torra}
-                </p>
-                <p className="text-base text-coffee-950 mt-1">{opiniao.texto}</p>
+              <li key={opiniao.id} className="bg-white rounded-lg shadow-sm p-4 flex gap-4">
+                {opiniao.imagem_embalagem_url && (
+                  <img
+                    src={opiniao.imagem_embalagem_url}
+                    alt={`Embalagem do café ${cafe.nome}`}
+                    className="w-16 h-16 shrink-0 rounded-md object-cover"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <Link
+                    to={`/opinioes/${opiniao.id}`}
+                    aria-label={`Ver opinião de ${opiniao.autor.display_name} sobre ${cafe.nome}`}
+                    className="text-sm font-semibold text-coffee-900"
+                  >
+                    {opiniao.autor.display_name}
+                  </Link>
+                  <p className="text-sm text-coffee-700">
+                    Grão: {opiniao.grao_especial} · Torra: {opiniao.torra}
+                  </p>
+                  <p className="text-base text-coffee-950 mt-1">{opiniao.texto}</p>
+                </div>
               </li>
             ))}
           </ul>

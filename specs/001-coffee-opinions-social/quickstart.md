@@ -17,6 +17,13 @@ cp .env.example .env   # ajuste POSTGRES_*, JWT_SECRET, CORS_ALLOW_ORIGINS, VITE
 docker compose up --build
 ```
 
+Popular o banco com usuários/cafés/opiniões de teste (idempotente — não faz nada se o seed já
+tiver sido aplicado):
+
+```bash
+docker compose exec backend python -m scripts.seed
+```
+
 - Backend: `http://localhost:8000` (rotas em `/api/...`)
 - Frontend: `http://localhost:5173`
 - PostgreSQL: `localhost:5432` (útil para inspecionar com `psql`/DBeaver)

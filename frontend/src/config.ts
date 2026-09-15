@@ -4,4 +4,6 @@ export const siteConfig = {
   descricaoPadrao:
     'Publique opiniões sobre cafés, descubra os mais bem avaliados pela comunidade e organize seu ranking pessoal.',
   ogImagePadrao: '/og-default.png',
+  capaPerfilPadrao: '/capa-perfil-padrao.svg',
+  avatarPlaceholderAlt: 'Avatar padrão com tema de grãos de café',
 } as const;

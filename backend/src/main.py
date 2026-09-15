@@ -1,5 +1,8 @@
+from pathlib import Path
+
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from src.api.routers import auth, cafes, opinioes, ranking, usuarios
 from src.core.config import get_settings
@@ -14,6 +17,10 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],
 )
+
+uploads_path = Path(settings.uploads_dir)
+uploads_path.mkdir(parents=True, exist_ok=True)
+app.mount("/api/media", StaticFiles(directory=uploads_path), name="media")
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(auth.router)

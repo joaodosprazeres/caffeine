@@ -83,7 +83,19 @@ export default function OpiniaoPage(): React.JSX.Element {
           <p className="text-sm text-coffee-500">por {opiniao.autor.display_name}</p>
         </header>
 
+        {opiniao.imagem_embalagem_url && (
+          <img
+            src={opiniao.imagem_embalagem_url}
+            alt={`Embalagem do café ${opiniao.cafe.nome}`}
+            className="w-full rounded-md object-cover"
+          />
+        )}
+
         <p className="text-base text-coffee-950">{opiniao.texto}</p>
+
+        {opiniao.nota_autor != null && (
+          <p className="text-sm text-amber-700">Nota do autor para este café: {opiniao.nota_autor}/5</p>
+        )}
 
         <p className="text-sm text-coffee-700">
           Nota média: {opiniao.nota_media != null ? opiniao.nota_media.toFixed(1) : '—'} (

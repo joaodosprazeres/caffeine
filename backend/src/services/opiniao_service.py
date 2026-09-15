@@ -1,5 +1,6 @@
 import uuid
 
+from fastapi import UploadFile
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,6 +10,7 @@ from src.models.usuario import Usuario as UsuarioModel
 from src.schemas.opiniao import Opiniao as OpiniaoSchema
 from src.schemas.opiniao import OpiniaoCreateRequest
 from src.schemas.usuario import Usuario as UsuarioSchema
+from src.services.armazenamento_service import ArmazenamentoService
 from src.services.cafe_aggregates import build_cafe_response, contar_notas_e_comentarios
 
 
@@ -47,14 +49,26 @@ class OpiniaoService:
             grao_especial=opiniao.grao_especial,
             torra=opiniao.torra,
             texto=opiniao.texto,
+            imagem_embalagem_url=opiniao.imagem_embalagem_url,
+            nota_autor=opiniao.nota_autor,
             nota_media=nota_media,
             total_notas=total_notas,
             total_comentarios=total_comentarios,
             created_at=opiniao.created_at,
         )
 
-    async def criar(self, autor_id: uuid.UUID, dados: OpiniaoCreateRequest) -> OpiniaoSchema:
+    async def criar(
+        self,
+        autor_id: uuid.UUID,
+        dados: OpiniaoCreateRequest,
+        imagem_embalagem: UploadFile | None,
+        armazenamento: ArmazenamentoService,
+    ) -> OpiniaoSchema:
         cafe = await self._buscar_ou_criar_cafe(dados.cafe_nome, dados.cafe_produtor)
+
+        imagem_embalagem_url = None
+        if imagem_embalagem is not None and imagem_embalagem.filename:
+            imagem_embalagem_url = await armazenamento.salvar(imagem_embalagem, "opinioes")
 
         opiniao = OpiniaoModel(
             autor_id=autor_id,
@@ -62,6 +76,8 @@ class OpiniaoService:
             grao_especial=dados.grao_especial,
             torra=dados.torra,
             texto=dados.texto,
+            imagem_embalagem_url=imagem_embalagem_url,
+            nota_autor=dados.nota_autor,
         )
         self.db.add(opiniao)
         await self.db.commit()

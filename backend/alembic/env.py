@@ -9,7 +9,15 @@ from src.core.config import get_settings
 from src.core.db import Base
 
 # import de todos os modelos para que Base.metadata os conheça no autogenerate
-from src.models import cafe, comentario, nota, opiniao, ranking_pessoal, usuario  # noqa: F401
+from src.models import (  # noqa: F401
+    cafe,
+    comentario,
+    nota,
+    opiniao,
+    ranking_pessoal,
+    seguidor,
+    usuario,
+)
 
 config = context.config
 

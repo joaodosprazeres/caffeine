@@ -4,9 +4,11 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.config import get_settings
 from src.core.db import async_session_factory
 from src.core.security import InvalidTokenError, decode_access_token
 from src.models.usuario import Usuario
+from src.services.armazenamento_service import ArmazenamentoService
 
 _bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -14,6 +16,10 @@ _bearer_scheme = HTTPBearer(auto_error=False)
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_factory() as session:
         yield session
+
+
+def get_armazenamento_service() -> ArmazenamentoService:
+    return ArmazenamentoService(get_settings())
 
 
 async def current_user(

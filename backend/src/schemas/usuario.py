@@ -23,6 +23,7 @@ class Usuario(BaseModel):
     username: str
     display_name: str
     bio: str | None
+    avatar_url: str | None
     created_at: datetime
 
 
@@ -34,3 +35,21 @@ class AuthResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     usuario: Usuario
+
+
+class UsuarioBusca(Usuario):
+    ja_seguido: bool
+
+
+class UsuarioBuscaListaResponse(BaseModel):
+    items: list[UsuarioBusca]
+    page: int
+    page_size: int
+    total: int
+
+
+class UsuarioListaResponse(BaseModel):
+    items: list[Usuario]
+    page: int
+    page_size: int
+    total: int

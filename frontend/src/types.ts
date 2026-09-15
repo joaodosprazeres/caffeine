@@ -5,11 +5,30 @@ export interface Usuario {
   username: string;
   display_name: string;
   bio: string | null;
+  avatar_url: string | null;
   created_at: string;
 }
 
 export interface PerfilUsuario extends Usuario {
   total_opinioes: number;
+}
+
+export interface UsuarioBusca extends Usuario {
+  ja_seguido: boolean;
+}
+
+export interface UsuarioBuscaListaResponse {
+  items: UsuarioBusca[];
+  page: number;
+  page_size: number;
+  total: number;
+}
+
+export interface UsuarioListaResponse {
+  items: Usuario[];
+  page: number;
+  page_size: number;
+  total: number;
 }
 
 export interface AuthResponse {
@@ -47,6 +66,8 @@ export interface OpiniaoCreateRequest {
   grao_especial: string;
   torra: Torra;
   texto: string;
+  nota_autor: number | null;
+  imagem_embalagem: File | null;
 }
 
 export interface Opiniao {
@@ -56,6 +77,8 @@ export interface Opiniao {
   grao_especial: string;
   torra: Torra;
   texto: string;
+  imagem_embalagem_url: string | null;
+  nota_autor: number | null;
   nota_media: number | null;
   total_notas: number;
   total_comentarios: number;

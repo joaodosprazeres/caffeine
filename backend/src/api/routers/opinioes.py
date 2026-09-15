@@ -1,13 +1,20 @@
 import uuid
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import current_user, get_db, optional_current_user
+from src.api.deps import current_user, get_armazenamento_service, get_db, optional_current_user
+from src.models.opiniao import Torra
 from src.models.usuario import Usuario as UsuarioModel
 from src.schemas.comentario import Comentario, ComentarioCreateRequest
 from src.schemas.nota import Nota, NotaUpsertRequest
 from src.schemas.opiniao import Opiniao, OpiniaoCreateRequest, OpiniaoDetalhe, OpiniaoListaResponse
+from src.services.armazenamento_service import (
+    ArmazenamentoService,
+    ArquivoMuitoGrandeError,
+    TipoArquivoInvalidoError,
+)
 from src.services.comentario_service import (
     AutorNaoPodeComentarPropriaOpiniaoError,
     ComentarioService,
@@ -22,12 +29,38 @@ router = APIRouter(tags=["opinioes"])
 
 @router.post("/opinioes", response_model=Opiniao, status_code=status.HTTP_201_CREATED)
 async def publicar_opiniao(
-    dados: OpiniaoCreateRequest,
+    cafe_nome: Annotated[str, Form()],
+    cafe_produtor: Annotated[str, Form()],
+    grao_especial: Annotated[str, Form()],
+    torra: Annotated[Torra, Form()],
+    texto: Annotated[str, Form()],
+    nota_autor: Annotated[int | None, Form()] = None,
+    imagem_embalagem: UploadFile | None = File(None),
     usuario: UsuarioModel = Depends(current_user),
     db: AsyncSession = Depends(get_db),
+    armazenamento: ArmazenamentoService = Depends(get_armazenamento_service),
 ) -> Opiniao:
+    dados = OpiniaoCreateRequest(
+        cafe_nome=cafe_nome,
+        cafe_produtor=cafe_produtor,
+        grao_especial=grao_especial,
+        torra=torra,
+        texto=texto,
+        nota_autor=nota_autor,
+    )
     service = OpiniaoService(db)
-    return await service.criar(usuario.id, dados)
+    try:
+        return await service.criar(usuario.id, dados, imagem_embalagem, armazenamento)
+    except TipoArquivoInvalidoError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="tipo de arquivo não suportado (aceita apenas image/jpeg, image/png, image/webp)",
+        ) from exc
+    except ArquivoMuitoGrandeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="arquivo excede o limite de tamanho permitido",
+        ) from exc
 
 
 @router.get("/opinioes/{opiniao_id}", response_model=OpiniaoDetalhe)

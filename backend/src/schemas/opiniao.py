@@ -15,6 +15,7 @@ class OpiniaoCreateRequest(BaseModel):
     grao_especial: str = Field(min_length=1, max_length=120)
     torra: Torra
     texto: str = Field(min_length=1, max_length=2000)
+    nota_autor: int | None = Field(default=None, ge=1, le=5)
 
 
 class Opiniao(BaseModel):
@@ -26,6 +27,8 @@ class Opiniao(BaseModel):
     grao_especial: str
     torra: Torra
     texto: str
+    imagem_embalagem_url: str | None = None
+    nota_autor: int | None = None
     nota_media: float | None = None
     total_notas: int = 0
     total_comentarios: int = 0

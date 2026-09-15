@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expires_minutes: int = 24 * 60
     cors_allow_origins: str = "http://localhost:5173"
+    uploads_dir: str = "uploads"
+    max_upload_size_mb: int = 5
 
     @property
     def cors_allow_origins_list(self) -> list[str]:

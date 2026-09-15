@@ -24,8 +24,8 @@ export default function LoginPage(): React.JSX.Element {
     setErro(null);
     setEnviando(true);
     try {
-      await login({ email, password });
-      navigate('/');
+      const usuarioAutenticado = await login({ email, password });
+      navigate(`/u/${usuarioAutenticado.username}`);
     } catch (err) {
       setErro(err instanceof ApiRequestError ? err.message : 'Não foi possível entrar.');
     } finally {

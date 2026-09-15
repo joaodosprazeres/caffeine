@@ -1,0 +1,280 @@
+openapi: 3.0.3
+info:
+  title: Caffeine API — Perfil Social Visual e Rede de Seguidores (delta)
+  version: "1.1.0"
+  description: >
+    Delta sobre ../../001-coffee-opinions-social/contracts/openapi.yaml (v1.0.0): esquemas e
+    endpoints novos ou alterados por esta feature. Endpoints/esquemas não listados aqui
+    permanecem exatamente como no contrato de 001. Toda escrita exige autenticação (Bearer JWT);
+    leitura pública, salvo indicação em contrário (FR-001 a FR-021 de spec.md).
+servers:
+  - url: /api
+
+security:
+  - {}
+
+paths:
+  /opinioes:
+    post:
+      operationId: publicarOpiniao
+      summary: >
+        Publica uma opinião sobre um café (FR-006-009 de 001; FR-008, FR-009, FR-021 desta
+        feature). ALTERADO: passa de `application/json` para `multipart/form-data` para suportar
+        anexo opcional de foto da embalagem.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/OpiniaoCreateForm' }
+            encoding:
+              imagem_embalagem:
+                contentType: image/jpeg, image/png, image/webp
+      responses:
+        '201':
+          description: Opinião publicada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Opiniao' }
+        '400':
+          description: campo obrigatório ausente
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+        '401':
+          description: não autenticado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+        '413':
+          description: arquivo de imagem excede o limite de tamanho (5MB)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+        '415':
+          description: tipo de arquivo não suportado (aceita apenas image/jpeg, image/png, image/webp)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+
+  /usuarios:
+    get:
+      operationId: buscarUsuarios
+      summary: Busca usuários por username ou nome de exibição (FR-012)
+      security: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 1 }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: page_size
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+      responses:
+        '200':
+          description: OK (lista pode ser vazia)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UsuarioBuscaListaResponse' }
+
+  /usuarios/me/avatar:
+    post:
+      operationId: definirAvatar
+      summary: Define ou substitui o avatar do usuário autenticado (FR-004)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/AvatarUploadForm' }
+      responses:
+        '200':
+          description: Avatar atualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Usuario' }
+        '401':
+          description: não autenticado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+        '413':
+          description: arquivo excede o limite de tamanho (5MB)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+        '415':
+          description: tipo de arquivo não suportado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+
+  /usuarios/me/seguidos:
+    get:
+      operationId: listarMeusSeguidos
+      summary: Lista os usuários que o usuário autenticado segue (FR-016)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: page_size
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+      responses:
+        '200':
+          description: OK (lista pode ser vazia)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UsuarioListaResponse' }
+        '401':
+          description: não autenticado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+
+  /usuarios/{username}/seguir:
+    post:
+      operationId: seguirUsuario
+      summary: Passa a seguir outro usuário (FR-013, FR-015)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/UsernamePath'
+      responses:
+        '204':
+          description: Passou a seguir (ou já seguia — idempotente)
+        '400':
+          description: tentativa de seguir a si mesmo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+        '401':
+          description: não autenticado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+        '404':
+          description: usuário a seguir não encontrado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+    delete:
+      operationId: deixarDeSeguirUsuario
+      summary: Deixa de seguir outro usuário (FR-014)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/UsernamePath'
+      responses:
+        '204':
+          description: Deixou de seguir (ou já não seguia — idempotente)
+        '401':
+          description: não autenticado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    UsernamePath:
+      name: username
+      in: path
+      required: true
+      schema: { type: string }
+
+  schemas:
+    ErroResponse:
+      type: object
+      properties:
+        detail: { type: string }
+
+    Usuario:
+      type: object
+      description: ALTERADO de 001 — adiciona avatar_url
+      properties:
+        id: { type: string, format: uuid }
+        username: { type: string }
+        display_name: { type: string }
+        bio: { type: string, nullable: true }
+        avatar_url: { type: string, nullable: true, description: "null = sem avatar próprio; frontend exibe placeholder" }
+        created_at: { type: string, format: date-time }
+
+    UsuarioBusca:
+      type: object
+      description: Item de resultado de busca — inclui se o usuário autenticado já segue este usuário
+      allOf:
+        - $ref: '#/components/schemas/Usuario'
+        - type: object
+          properties:
+            ja_seguido: { type: boolean, description: "true se o usuário autenticado já segue este resultado; false quando não autenticado" }
+
+    UsuarioBuscaListaResponse:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/UsuarioBusca' } }
+        page: { type: integer }
+        page_size: { type: integer }
+        total: { type: integer }
+
+    UsuarioListaResponse:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Usuario' } }
+        page: { type: integer }
+        page_size: { type: integer }
+        total: { type: integer }
+
+    AvatarUploadForm:
+      type: object
+      required: [arquivo]
+      properties:
+        arquivo:
+          type: string
+          format: binary
+          description: "image/jpeg, image/png ou image/webp, até 5MB"
+
+    OpiniaoCreateForm:
+      type: object
+      description: ALTERADO de 001 (era JSON) — mesmos campos + imagem_embalagem e nota_autor opcionais
+      required: [cafe_nome, cafe_produtor, grao_especial, torra, texto]
+      properties:
+        cafe_nome: { type: string, minLength: 1, maxLength: 120 }
+        cafe_produtor: { type: string, minLength: 1, maxLength: 120 }
+        grao_especial: { type: string, minLength: 1, maxLength: 120 }
+        torra: { type: string, enum: [clara, media, escura] }
+        texto: { type: string, minLength: 1, maxLength: 2000 }
+        nota_autor:
+          type: integer
+          minimum: 1
+          maximum: 5
+          nullable: true
+          description: "opcional; nota do próprio autor ao café — não conta na nota_media consolidada (FR-021)"
+        imagem_embalagem:
+          type: string
+          format: binary
+          nullable: true
+          description: "opcional; image/jpeg, image/png ou image/webp, até 5MB"
+
+    Opiniao:
+      type: object
+      description: ALTERADO de 001 — adiciona imagem_embalagem_url e nota_autor
+      properties:
+        id: { type: string, format: uuid }
+        autor: { $ref: '#/components/schemas/Usuario' }
+        grao_especial: { type: string }
+        torra: { type: string, enum: [clara, media, escura] }
+        texto: { type: string }
+        imagem_embalagem_url: { type: string, nullable: true }
+        nota_autor: { type: integer, nullable: true, minimum: 1, maximum: 5 }
+        nota_media: { type: number, nullable: true }
+        total_notas: { type: integer }
+        total_comentarios: { type: integer }
+        created_at: { type: string, format: date-time }
