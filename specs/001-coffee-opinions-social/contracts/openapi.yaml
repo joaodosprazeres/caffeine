@@ -1,0 +1,567 @@
+openapi: 3.0.3
+info:
+  title: Caffeine API — Mini Rede Social de Opiniões sobre Cafés
+  version: "1.0.0"
+  description: >
+    Contrato da API REST consumida pelo frontend (React + react-router). Toda escrita exige
+    autenticação (Bearer JWT); leitura é pública, conforme FR-001 a FR-016 de spec.md.
+servers:
+  - url: /api
+
+security:
+  - {}
+
+paths:
+  /auth/registro:
+    post:
+      operationId: registrarUsuario
+      summary: Cria uma conta de usuário (FR-005, FR-016)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegistroRequest' }
+      responses:
+        '201':
+          description: Conta criada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '409':
+          description: email ou username já em uso
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+        '422':
+          description: dados inválidos
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+
+  /auth/login:
+    post:
+      operationId: login
+      summary: Autentica um usuário existente (FR-016)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Autenticado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '401':
+          description: credenciais inválidas
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+
+  /auth/me:
+    get:
+      operationId: usuarioAtual
+      summary: Retorna o usuário autenticado atual
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Usuario' }
+        '401':
+          description: não autenticado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+
+  /usuarios/{username}:
+    get:
+      operationId: obterPerfilUsuario
+      summary: Perfil público de um usuário (FR-005)
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/UsernamePath'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PerfilUsuario' }
+        '404':
+          description: usuário não encontrado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+
+  /usuarios/{username}/opinioes:
+    get:
+      operationId: listarOpinioesDeUsuario
+      summary: Opiniões publicadas por um usuário específico (FR-001)
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/UsernamePath'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpiniaoListaResponse' }
+        '404':
+          description: usuário não encontrado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+
+  /usuarios/{username}/ranking:
+    get:
+      operationId: obterRankingPessoal
+      summary: Ranking pessoal de um usuário específico (FR-002)
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/UsernamePath'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RankingPessoalResponse' }
+        '404':
+          description: usuário não encontrado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+
+  /usuarios/me/ranking:
+    put:
+      operationId: atualizarRankingPessoal
+      summary: Define/reordena o ranking pessoal do usuário autenticado (FR-008)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RankingPessoalUpdateRequest' }
+      responses:
+        '200':
+          description: Ranking atualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RankingPessoalResponse' }
+        '400':
+          description: café incluído sem opinião prévia do usuário, ou posições inválidas
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+        '401':
+          description: não autenticado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+
+  /cafes:
+    get:
+      operationId: buscarCafes
+      summary: Busca/listagem de cafés por nome ou produtor
+      security: []
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema: { type: string }
+          description: termo de busca (nome ou produtor)
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CafeListaResponse' }
+
+  /cafes/{cafe_id}:
+    get:
+      operationId: obterConsolidadoCafe
+      summary: Consolidado de todas as opiniões/notas de um café específico (FR-003)
+      security: []
+      parameters:
+        - name: cafe_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CafeConsolidado' }
+        '404':
+          description: café não encontrado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+
+  /ranking-geral:
+    get:
+      operationId: obterRankingGeral
+      summary: Ranking geral de cafés da rede, agregado (FR-004, FR-015)
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RankingGeralResponse' }
+
+  /opinioes:
+    post:
+      operationId: publicarOpiniao
+      summary: Publica uma opinião sobre um café (FR-006, FR-007, FR-009)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpiniaoCreateRequest' }
+      responses:
+        '201':
+          description: Opinião publicada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Opiniao' }
+        '400':
+          description: campo obrigatório ausente
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+        '401':
+          description: não autenticado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+
+  /opinioes/{opiniao_id}:
+    get:
+      operationId: obterOpiniao
+      summary: Detalhe de uma opinião, com comentários e nota do usuário atual (se houver)
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/OpiniaoIdPath'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpiniaoDetalhe' }
+        '404':
+          description: opinião não encontrada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+
+  /opinioes/{opiniao_id}/comentarios:
+    post:
+      operationId: comentarOpiniao
+      summary: Comenta na opinião de outro usuário (FR-010, FR-012)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/OpiniaoIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ComentarioCreateRequest' }
+      responses:
+        '201':
+          description: Comentário publicado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Comentario' }
+        '403':
+          description: autor tentou comentar na própria opinião
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+        '401':
+          description: não autenticado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+
+  /opinioes/{opiniao_id}/nota:
+    put:
+      operationId: darOuAtualizarNota
+      summary: Dá ou substitui a nota do usuário autenticado para a opinião (FR-011, FR-012, FR-013)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/OpiniaoIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NotaUpsertRequest' }
+      responses:
+        '200':
+          description: Nota registrada ou substituída
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Nota' }
+        '403':
+          description: autor tentou notar a própria opinião
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+        '401':
+          description: não autenticado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroResponse' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    UsernamePath:
+      name: username
+      in: path
+      required: true
+      schema: { type: string }
+    OpiniaoIdPath:
+      name: opiniao_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Page:
+      name: page
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, default: 1 }
+    PageSize:
+      name: page_size
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+
+  schemas:
+    Torra:
+      type: string
+      enum: [clara, media, escura]
+
+    ErroResponse:
+      type: object
+      required: [detail]
+      properties:
+        detail: { type: string }
+
+    RegistroRequest:
+      type: object
+      required: [email, username, display_name, password]
+      properties:
+        email: { type: string, format: email }
+        username: { type: string, minLength: 3, maxLength: 30 }
+        display_name: { type: string, minLength: 1, maxLength: 80 }
+        password: { type: string, minLength: 8 }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+
+    AuthResponse:
+      type: object
+      required: [access_token, token_type, usuario]
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, enum: [bearer] }
+        usuario: { $ref: '#/components/schemas/Usuario' }
+
+    Usuario:
+      type: object
+      required: [id, username, display_name, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        username: { type: string }
+        display_name: { type: string }
+        bio: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    PerfilUsuario:
+      allOf:
+        - $ref: '#/components/schemas/Usuario'
+        - type: object
+          required: [total_opinioes]
+          properties:
+            total_opinioes: { type: integer }
+
+    Cafe:
+      type: object
+      required: [id, nome, produtor]
+      properties:
+        id: { type: string, format: uuid }
+        nome: { type: string }
+        produtor: { type: string }
+        grao_especial_atual: { type: string, nullable: true }
+        torra_atual: { allOf: [{ $ref: '#/components/schemas/Torra' }], nullable: true }
+        nota_media: { type: number, format: float, nullable: true }
+        total_opinioes: { type: integer }
+        total_notas: { type: integer }
+
+    CafeListaResponse:
+      type: object
+      required: [items, page, page_size, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Cafe' }
+        page: { type: integer }
+        page_size: { type: integer }
+        total: { type: integer }
+
+    CafeConsolidado:
+      allOf:
+        - $ref: '#/components/schemas/Cafe'
+        - type: object
+          required: [opinioes]
+          properties:
+            opinioes:
+              type: array
+              items: { $ref: '#/components/schemas/Opiniao' }
+
+    Opiniao:
+      type: object
+      required: [id, autor, cafe, grao_especial, torra, texto, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        autor: { $ref: '#/components/schemas/Usuario' }
+        cafe: { $ref: '#/components/schemas/Cafe' }
+        grao_especial: { type: string }
+        torra: { $ref: '#/components/schemas/Torra' }
+        texto: { type: string }
+        nota_media: { type: number, format: float, nullable: true }
+        total_notas: { type: integer }
+        total_comentarios: { type: integer }
+        created_at: { type: string, format: date-time }
+
+    OpiniaoDetalhe:
+      allOf:
+        - $ref: '#/components/schemas/Opiniao'
+        - type: object
+          required: [comentarios]
+          properties:
+            comentarios:
+              type: array
+              items: { $ref: '#/components/schemas/Comentario' }
+            nota_do_usuario_atual:
+              type: integer
+              nullable: true
+              description: nota (1-5) dada pelo usuário autenticado atual, se houver
+
+    OpiniaoListaResponse:
+      type: object
+      required: [items, page, page_size, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Opiniao' }
+        page: { type: integer }
+        page_size: { type: integer }
+        total: { type: integer }
+
+    OpiniaoCreateRequest:
+      type: object
+      required: [cafe_nome, cafe_produtor, grao_especial, torra, texto]
+      properties:
+        cafe_nome: { type: string, minLength: 1, maxLength: 120 }
+        cafe_produtor: { type: string, minLength: 1, maxLength: 120 }
+        grao_especial: { type: string, minLength: 1, maxLength: 120 }
+        torra: { $ref: '#/components/schemas/Torra' }
+        texto: { type: string, minLength: 1, maxLength: 2000 }
+
+    Comentario:
+      type: object
+      required: [id, autor, texto, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        autor: { $ref: '#/components/schemas/Usuario' }
+        texto: { type: string }
+        created_at: { type: string, format: date-time }
+
+    ComentarioCreateRequest:
+      type: object
+      required: [texto]
+      properties:
+        texto: { type: string, minLength: 1, maxLength: 1000 }
+
+    Nota:
+      type: object
+      required: [opiniao_id, valor, updated_at]
+      properties:
+        opiniao_id: { type: string, format: uuid }
+        valor: { type: integer, minimum: 1, maximum: 5 }
+        updated_at: { type: string, format: date-time }
+
+    NotaUpsertRequest:
+      type: object
+      required: [valor]
+      properties:
+        valor: { type: integer, minimum: 1, maximum: 5 }
+
+    RankingPessoalItemResponse:
+      type: object
+      required: [posicao, cafe]
+      properties:
+        posicao: { type: integer, minimum: 1 }
+        cafe: { $ref: '#/components/schemas/Cafe' }
+
+    RankingPessoalResponse:
+      type: object
+      required: [usuario, items]
+      properties:
+        usuario: { $ref: '#/components/schemas/Usuario' }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/RankingPessoalItemResponse' }
+
+    RankingPessoalUpdateRequest:
+      type: object
+      required: [cafe_ids_em_ordem]
+      properties:
+        cafe_ids_em_ordem:
+          type: array
+          description: lista de cafe_id na ordem de preferência (posição 1 = primeiro item)
+          items: { type: string, format: uuid }
+          minItems: 1
+
+    RankingGeralEntry:
+      type: object
+      required: [cafe, nota_media, total_notas, score_final]
+      properties:
+        cafe: { $ref: '#/components/schemas/Cafe' }
+        nota_media: { type: number, format: float, nullable: true }
+        total_notas: { type: integer }
+        score_final: { type: number, format: float }
+
+    RankingGeralResponse:
+      type: object
+      required: [items, page, page_size, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/RankingGeralEntry' }
+        page: { type: integer }
+        page_size: { type: integer }
+        total: { type: integer }

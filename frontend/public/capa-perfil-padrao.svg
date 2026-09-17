@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" role="img" aria-label="Ilustração de grãos de café e xícara de café sobre fundo em tons de marrom">
+  <defs>
+    <linearGradient id="fundo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2c1c12" />
+      <stop offset="55%" stop-color="#5a3d2b" />
+      <stop offset="100%" stop-color="#94540a" />
+    </linearGradient>
+    <radialGradient id="vapor" cx="50%" cy="0%" r="80%">
+      <stop offset="0%" stop-color="#f1e4d8" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#f1e4d8" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="300" fill="url(#fundo)" />
+
+  <!-- grãos de café espalhados -->
+  <g fill="#1c130d" opacity="0.35">
+    <ellipse cx="120" cy="60" rx="26" ry="17" transform="rotate(-20 120 60)" />
+    <ellipse cx="180" cy="110" rx="22" ry="14" transform="rotate(15 180 110)" />
+    <ellipse cx="90" cy="180" rx="24" ry="16" transform="rotate(35 90 180)" />
+    <ellipse cx="1040" cy="70" rx="24" ry="16" transform="rotate(25 1040 70)" />
+    <ellipse cx="1110" cy="140" rx="22" ry="14" transform="rotate(-15 1110 140)" />
+    <ellipse cx="980" cy="200" rx="26" ry="17" transform="rotate(10 980 200)" />
+  </g>
+  <g stroke="#1c130d" stroke-width="2" opacity="0.4" stroke-linecap="round">
+    <path d="M100 52 Q120 60 140 68" />
+    <path d="M164 104 Q180 110 196 116" />
+    <path d="M72 172 Q90 180 108 188" />
+    <path d="M1020 62 Q1040 70 1060 78" />
+    <path d="M1096 132 Q1110 140 1124 148" />
+    <path d="M960 192 Q980 200 1000 208" />
+  </g>
+
+  <!-- xícara de café centralizada -->
+  <g transform="translate(560 90)">
+    <ellipse cx="80" cy="15" rx="95" ry="18" fill="url(#vapor)" />
+    <path d="M20 40 h120 l-10 90 a20 20 0 0 1-20 18 H50 a20 20 0 0 1-20-18 Z" fill="#faf6f1" />
+    <path d="M20 40 h120 l-3 26 H23 Z" fill="#f1e4d8" />
+    <path d="M140 55 q34 0 34 30 q0 30-34 30" fill="none" stroke="#faf6f1" stroke-width="10" stroke-linecap="round" />
+    <path d="M35 8 q6-16 0-28" fill="none" stroke="#f1e4d8" stroke-width="6" stroke-linecap="round" opacity="0.8" />
+    <path d="M80 4 q6-16 0-28" fill="none" stroke="#f1e4d8" stroke-width="6" stroke-linecap="round" opacity="0.8" />
+    <path d="M125 8 q6-16 0-28" fill="none" stroke="#f1e4d8" stroke-width="6" stroke-linecap="round" opacity="0.8" />
+  </g>
+</svg>
