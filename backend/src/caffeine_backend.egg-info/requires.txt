@@ -1,0 +1,16 @@
+fastapi<1.0,>=0.115
+pydantic[email]<3.0,>=2.9
+pydantic-settings<3.0,>=2.5
+sqlalchemy[asyncio]<3.0,>=2.0
+alembic<2.0,>=1.13
+asyncpg<1.0,>=0.29
+bcrypt<5.0,>=4.2
+PyJWT<3.0,>=2.9
+uvicorn[standard]<1.0,>=0.30
+
+[dev]
+pytest<9.0,>=8.3
+pytest-asyncio<1.0,>=0.24
+httpx<1.0,>=0.27
+ruff<1.0,>=0.6
+black<25.0,>=24.8
