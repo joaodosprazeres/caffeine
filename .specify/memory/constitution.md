@@ -1,26 +1,29 @@
 <!--
 Sync Impact Report
-Version change: 2.0.0 → 3.0.0
-Rationale: MAJOR bump. Removes the previously unconditional MUST in Principle IV that required
-meta tags/SEO data to come exclusively from `src/config.ts` ("nunca hardcoded fora dele"). That
-absolute rule is a removal/redefinition of existing binding governance (not an additive
-expansion), which per this constitution's own versioning policy requires a MAJOR bump —
-consistent with how the analogous Principle II change was versioned in v2.0.0. Principle IV now
-splits meta tag sourcing: static/institutional pages still pull from `config.ts`; dynamic pages
-(café, usuário, opinião) MUST pull from the backend API instead. This closes the deferred TODO
-opened in v2.0.0's Sync Impact Report.
+Version change: 3.0.0 → 3.1.0
+Rationale: MINOR bump. Amplia materialmente orientação existente sobre dependências
+permitidas, sem remover nem redefinir nenhum princípio. A Regra II permanece uma allowlist
+fechada e a Regra V permanece restringindo framework web/ORM/ferramenta de migração; ambas
+apenas passam a enumerar bibliotecas de observabilidade entre as opções permitidas. Nada que
+era conforme antes deixa de ser conforme, e nenhuma obrigação existente foi removida — daí
+MINOR e não MAJOR, em contraste com v3.0.0, que removeu um MUST incondicional da Regra IV.
 Principles modified:
-  - IV. SEO Local e Estruturado — meta tags (`title`, `description`, Open Graph) and structured
-    data are no longer required to come exclusively from `config.ts`; static/institutional pages
-    still use `config.ts`, dynamic pages (café, usuário, opinião) now MUST source them from the
-    backend API. Everything else in the principle (JSON-LD schemas, crawler-accessible content)
-    unchanged.
+  - II. Arquitetura Config → Types → Components — a allowlist de dependências de runtime do
+    frontend passa a incluir bibliotecas de observabilidade (logging estruturado e
+    OpenTelemetry). A permissão é estreita: SDKs de session replay e de analytics
+    comportamental continuam proibidos, e telemetria MUST NOT carregar credenciais ou dados
+    pessoais identificáveis.
+  - V. Backend Tipado, Migrável e Sem Lógica em Rotas — torna explícito que bibliotecas de
+    observabilidade não se enquadram nas categorias restritas (framework web, ORM, ferramenta
+    de migração) e são permitidas sem emenda, sujeitas ao mesmo limite de telemetria.
 Principles added: none
 Added sections: none
 Removed sections: none
-Resolved from prior deferred TODOs:
-  - The "Principle IV vs backend dynamic data" tension (open since v2.0.0) is now resolved by
-    this amendment.
+Sections updated:
+  - Restrições Tecnológicas — espelha as duas permissões acima nos dois stacks.
+  - Fluxo de Desenvolvimento e Revisão — os dois itens de checklist sobre dependências novas
+    passam a refletir a allowlist ampliada; novo item de revisão sobre redação de segredos e
+    dados pessoais em logs e telemetria.
 Deferred TODOs / follow-ups: none currently open.
 -->
 
@@ -51,9 +54,14 @@ padrão) → `types.ts` (contratos, incluindo os contratos de resposta da API) �
 opiniões, comentários, notas, perfis e rankings — são responsabilidade do
 backend (Regra V) e chegam ao frontend via chamadas à API; eles MUST NOT ser
 hardcoded ou duplicados em `config.ts`. Dependências de runtime MUST ser
-mínimas: apenas React, TypeScript, Vite, TailwindCSS, react-router e uma única
-biblioteca de ícones são permitidas; qualquer dependência adicional exige
-emenda a esta constituição antes de ser introduzida.
+mínimas: apenas React, TypeScript, Vite, TailwindCSS, react-router, uma única
+biblioteca de ícones e bibliotecas de observabilidade — logging estruturado e
+OpenTelemetry (API, SDK e instrumentações) — são permitidas; qualquer
+dependência adicional exige emenda a esta constituição antes de ser
+introduzida. A permissão de observabilidade é estreita e delimitada: SDKs de
+session replay, gravação de sessão ou analytics comportamental MUST NOT ser
+introduzidos, e a telemetria emitida pelo frontend MUST NOT conter senhas,
+tokens de autenticação ou dados pessoais identificáveis.
 
 **Rationale**: manter `config.ts` como fonte única de conteúdo estático continua
 tornando textos institucionais e branding seguros de editar sem tocar em lógica
@@ -61,7 +69,12 @@ de UI; separar os dados dinâmicos de usuário para o backend evita que
 `config.ts` vire um banco de dados disfarçado e mantém a cadeia config → types
 → components coerente mesmo com um backend real; a superfície mínima de
 dependências reduz risco de supply chain, tamanho de bundle e custo de
-manutenção.
+manutenção. A exceção para observabilidade reconhece que uma aplicação que não
+pode ser diagnosticada em produção é um risco maior que o custo de bundle de um
+SDK de telemetria; o limite contra session replay e analytics comportamental
+mantém a exceção estreita o bastante para não reabrir a porta a dependências
+por conveniência, e a proibição de PII na telemetria evita que observabilidade
+vire um canal de vazamento de dados de usuário.
 
 ### III. Design Mobile-First e Acessível
 Todo componente MUST renderizar corretamente e permanecer utilizável a partir de
@@ -102,24 +115,35 @@ conteúdo real das páginas.
 ### V. Backend Tipado, Migrável e Sem Lógica em Rotas
 O stack de backend é fixo: Python, FastAPI, Pydantic, SQLAlchemy e Alembic —
 nenhuma dependência adicional de framework web, ORM ou ferramenta de migração
-MUST ser introduzida sem emenda a esta constituição. Toda fronteira de entrada e
-saída da API (request/response) MUST ser tipada e validada por um modelo
-Pydantic nomeado — dados aceitos ou retornados como `dict`/`Any` livre são
-proibidos. Toda mudança de schema do banco de dados MUST ser acompanhada de uma
-migração Alembic versionada; alterações diretas no schema fora do fluxo de
-migração são proibidas. Rotas FastAPI MUST permanecer finas: MUST NOT conter
-lógica de negócio, consultas complexas ou regras de domínio — essas
-responsabilidades pertencem a uma camada de serviço dedicada, testável
-independentemente do transporte HTTP. Acesso ao banco de dados MUST passar
-exclusivamente pelos modelos SQLAlchemy — consultas SQL cruas fora dessa camada
-são proibidas salvo exceção documentada.
+MUST ser introduzida sem emenda a esta constituição. Bibliotecas de
+observabilidade — logging estruturado, OpenTelemetry (API, SDK e
+instrumentações) e exportadores de métricas — MUST NOT ser tratadas como
+dependências restritas por esta regra: não constituem framework web, ORM nem
+ferramenta de migração, e são permitidas sem emenda. Logs e telemetria MUST NOT
+conter senhas, tokens de autenticação, segredos de configuração ou dados
+pessoais identificáveis; a instrumentação MUST redigir esses campos na origem,
+preferencialmente por allowlist explícita de campos registráveis. Toda
+fronteira de entrada e saída da API (request/response) MUST ser tipada e
+validada por um modelo Pydantic nomeado — dados aceitos ou retornados como
+`dict`/`Any` livre são proibidos. Toda mudança de schema do banco de dados MUST
+ser acompanhada de uma migração Alembic versionada; alterações diretas no
+schema fora do fluxo de migração são proibidas. Rotas FastAPI MUST permanecer
+finas: MUST NOT conter lógica de negócio, consultas complexas ou regras de
+domínio — essas responsabilidades pertencem a uma camada de serviço dedicada,
+testável independentemente do transporte HTTP. Acesso ao banco de dados MUST
+passar exclusivamente pelos modelos SQLAlchemy — consultas SQL cruas fora dessa
+camada são proibidas salvo exceção documentada.
 
 **Rationale**: tipagem estrita via Pydantic nas fronteiras da API espelha a
 Regra I no frontend e elimina uma classe inteira de bugs de contrato entre
 cliente e servidor; migrações obrigatórias via Alembic garantem que o schema do
 banco seja sempre reproduzível e auditável; rotas finas com lógica isolada em
 serviços mantêm a API testável e evitam que regras de negócio fiquem
-espalhadas e acopladas ao framework web.
+espalhadas e acopladas ao framework web; permitir observabilidade
+explicitamente elimina a ambiguidade de ter que decidir, caso a caso, se um
+pacote de logging ou telemetria cai em alguma das categorias restritas — e a
+obrigação de redigir segredos e PII na origem garante que instrumentar o
+sistema não crie uma nova superfície de vazamento.
 
 ## Restrições Tecnológicas
 
@@ -136,13 +160,18 @@ tokens MUST ser evitadas. Frameworks de CSS-in-JS ou UI kits de componentes de
 terceiros (ex.: MUI, Chakra, Bootstrap) MUST NOT ser introduzidos, pois
 violariam o limite de dependências da Regra II. Ícones MUST vir exclusivamente
 da biblioteca de ícones única já adotada pelo projeto — não MUST haver mistura
-de múltiplas bibliotecas de ícones.
+de múltiplas bibliotecas de ícones. Bibliotecas de observabilidade (logging
+estruturado e OpenTelemetry) são permitidas nos termos da Regra II; SDKs de
+session replay e de analytics comportamental permanecem proibidos.
 
 O stack de backend é fixo: Python com FastAPI como framework web, Pydantic para
 validação e serialização, SQLAlchemy como ORM e Alembic para migrações de
 schema — nenhuma migração para outro framework web, ORM ou ferramenta de
-migração MUST ocorrer sem emenda a esta constituição. React e o restante do
-stack de frontend MUST permanecer exclusivos ao frontend; Python e o stack de
+migração MUST ocorrer sem emenda a esta constituição. Bibliotecas de
+observabilidade (logging estruturado, OpenTelemetry e exportadores de métricas)
+são permitidas nos termos da Regra V e não contam como dependências restritas.
+React e o restante do stack de frontend MUST permanecer exclusivos ao
+frontend; Python e o stack de
 backend MUST permanecer exclusivos ao backend — nenhum dos dois lados MUST
 assumir responsabilidades do outro.
 
@@ -158,8 +187,9 @@ explicitamente:
   `src/config.ts`, e nenhum dado de domínio dinâmico (opiniões, comentários,
   notas, perfis, rankings) foi hardcoded em `config.ts` em vez de vir da API;
 - nenhuma dependência nova foi adicionada fora de
-  React/TypeScript/Vite/TailwindCSS/react-router/ícones sem emenda
-  constitucional prévia;
+  React/TypeScript/Vite/TailwindCSS/react-router/ícones/observabilidade sem
+  emenda constitucional prévia, e nenhum SDK de session replay ou analytics
+  comportamental foi introduzido;
 - navegação entre páginas internas usa react-router, sem recarregamento
   completo de página nem abertura de nova aba;
 - o componente foi verificado visualmente/funcionalmente em 320px de largura;
@@ -175,7 +205,11 @@ explicitamente:
   está em uma camada de serviço;
 - nenhum acesso ao banco de dados contorna os modelos SQLAlchemy;
 - nenhuma dependência nova de backend foi adicionada fora de
-  Python/FastAPI/Pydantic/SQLAlchemy/Alembic sem emenda constitucional prévia.
+  Python/FastAPI/Pydantic/SQLAlchemy/Alembic/observabilidade sem emenda
+  constitucional prévia;
+- nenhum log, métrica ou span emitido expõe senha, token de autenticação,
+  segredo de configuração ou dado pessoal identificável — em nenhum dos dois
+  stacks.
 
 Qualquer violação encontrada MUST bloquear o merge até ser corrigida ou até que
 uma emenda formal a esta constituição autorize a exceção.
@@ -200,4 +234,4 @@ Complexidade adicional (nova dependência, nova camada de abstração, desvio do
 design system) MUST ser justificada explicitamente na descrição do PR ou
 rejeitada.
 
-**Version**: 3.0.0 | **Ratified**: 2026-09-07 | **Last Amended**: 2026-09-07
+**Version**: 3.1.0 | **Ratified**: 2026-09-07 | **Last Amended**: 2026-09-18
