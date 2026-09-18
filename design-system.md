@@ -58,3 +58,17 @@ Mobile-first a partir de 320px; breakpoints padrão do Tailwind (`sm: 640px`, `m
 
 - `rounded-md` (6px) para inputs/botões; `rounded-lg` (8px) para cards.
 - Sombra única `shadow-sm` para elevar cards sobre `coffee-50`; evitar sombras múltiplas/custom.
+
+## Como as regras são aplicadas
+
+O `theme` em `frontend/tailwind.config.ts` **substitui** (não estende) os defaults do Tailwind.
+Isso é intencional: tokens fora da paleta (`bg-gray-500`, `text-9xl`) simplesmente não geram
+CSS, falhando de forma visível.
+
+Valores arbitrários, porém, driblam o theme — `text-[13px]` e `bg-[#ff0000]` compilam
+normalmente. Duas travas cobrem essa brecha:
+
+- `npm run check:tokens` (`frontend/scripts/check-design-tokens.mjs`) varre `src/**` e
+  `index.html`; roda automaticamente antes de `npm run build`.
+- A regra `no-restricted-syntax` no ESLint sinaliza o mesmo dentro do editor.
+  `tailwind.config.ts` está isento — é onde os hexadecimais devem existir.

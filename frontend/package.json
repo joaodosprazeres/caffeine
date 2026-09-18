@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "npm run check:tokens && tsc --noEmit && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .ts,.tsx",
+    "check:tokens": "node scripts/check-design-tokens.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
